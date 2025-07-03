@@ -56,6 +56,7 @@ ENV PATH="/opt/codeql:${PATH}"
 # https://github.com/orgs/codeql/packages
 
 # Download CodeQL packs
+
 RUN codeql pack download \
     codeql/rust-all \
     codeql/rust-queries \
