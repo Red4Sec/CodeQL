@@ -2,8 +2,13 @@
 #     docs: https://docs.github.com/en/code-security/codeql-cli/codeql-cli-manual/query-compile
 #           https://github.com/orgs/codeql/packages
 
-FROM ubuntu:24.04 AS codeql_base
-MAINTAINER "R4S Team"
+FROM ubuntu:24.04
+LABEL \
+    org.opencontainers.image.title="codeql" \
+    org.opencontainers.image.version="1.0" \
+    org.opencontainers.image.description="CodeQL container by Red4Sec" \
+    org.opencontainers.image.vendor="Red4Sec" \
+    org.opencontainers.image.authors="red4sec.com"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV NODE_VERSION=24.0.2
@@ -20,7 +25,15 @@ RUN apt-get update && \
         build-essential \
         unzip gnupg g++ \
         make gcc \
-        golang
+        golang \
+        default-jdk \
+        python3-pip python3-setuptools python3-wheel \
+        python3-venv
+
+# Create Python virtual environment
+
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Get the latest version of the codeql-cli
 
@@ -42,33 +55,29 @@ ENV PATH="/opt/codeql:${PATH}"
 
 # https://github.com/orgs/codeql/packages
 
-RUN codeql pack download codeql/rust-queries
-RUN codeql pack download codeql/go-queries
-RUN codeql pack download codeql/cpp-queries
-RUN codeql pack download codeql/javascript-queries
-RUN codeql pack download codeql/python-queries
-RUN codeql pack download codeql/csharp-queries
-RUN codeql pack download codeql/java-queries
+# Download CodeQL packs
+RUN codeql pack download \
+    codeql/rust-all \
+    codeql/rust-queries \
+    codeql/go-all \
+    codeql/go-queries \
+    codeql/cpp-all \
+    codeql/cpp-queries \
+    codeql/javascript-all \
+    codeql/javascript-queries \
+    codeql/python-all \
+    codeql/python-queries \
+    codeql/csharp-all \
+    codeql/csharp-queries \
+    codeql/java-all \
+    codeql/java-queries
 
 # Check codeql version
 
-RUN codeql version
-RUN codeql resolve queries
-RUN codeql resolve packs
-RUN codeql resolve languages
-
-# Install Python
-
-RUN apt-get install -y --no-install-recommends \
-    python3-pip python3-setuptools python3-wheel \
-    python3-venv
-
-# Create virtual environment and Clean
-
-RUN python3 -m venv /opt/venv && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-ENV PATH="/opt/venv/bin:$PATH"
+RUN codeql version && \
+    codeql resolve queries && \
+    codeql resolve packs && \
+    codeql resolve languages
 
 # Add Microsoft package feed for .NET
 
@@ -77,10 +86,6 @@ RUN add-apt-repository ppa:dotnet/backports && \
     apt-get install -y --no-install-recommends dotnet-sdk-$DOTNET_VERSION
 
 RUN dotnet --version
-
-# Install Java for tools/builds
-
-RUN apt-get install -y --no-install-recommends default-jdk apt-transport-https
 
 # Install NVM and Node.js
 
