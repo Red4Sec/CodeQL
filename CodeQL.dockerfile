@@ -31,6 +31,7 @@ RUN apt-get update && \
         default-jdk \
         python3-pip python3-setuptools python3-wheel \
         python3-venv
+
 # Create Python virtual environment
 
 RUN python3 -m venv /opt/venv
