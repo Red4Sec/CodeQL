@@ -39,7 +39,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install rust
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+RUN curl -y --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ENV PATH="/root/.cargo/bin:$PATH"
 
 # Get the latest version of the codeql-cli
