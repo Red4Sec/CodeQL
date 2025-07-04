@@ -14,7 +14,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV NODE_VERSION=24.0.2
 ENV DOTNET_VERSION=9.0
 
-# Install codeql
+# Install requirements
+# https://codeql.github.com/docs/codeql-overview/system-requirements
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends apt-utils \
@@ -26,14 +27,19 @@ RUN apt-get update && \
         unzip gnupg g++ \
         make gcc \
         golang \
+        ruby-full \
         default-jdk \
         python3-pip python3-setuptools python3-wheel \
         python3-venv
-
 # Create Python virtual environment
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Install rust
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+ENV PATH="/root/.cargo/bin:$PATH"
 
 # Get the latest version of the codeql-cli
 
@@ -48,11 +54,6 @@ RUN curl -s https://api.github.com/repos/github/codeql-cli-binaries/releases/lat
 RUN mv codeql* /opt/codeql/
 ENV PATH="/opt/codeql:${PATH}"
 
-# Copy rules repository
-
-# WORKDIR /opt/codeql
-# RUN git clone --depth 1 --branch main https://github.com/github/codeql codeql-repo
-
 # https://github.com/orgs/codeql/packages
 
 # Download CodeQL packs
@@ -60,6 +61,8 @@ ENV PATH="/opt/codeql:${PATH}"
 RUN codeql pack download \
     codeql/rust-all \
     codeql/rust-queries \
+    codeql/actions-all \
+    codeql/actions-queries \
     codeql/go-all \
     codeql/go-queries \
     codeql/cpp-all \
@@ -84,9 +87,8 @@ RUN codeql version && \
 
 RUN add-apt-repository ppa:dotnet/backports && \
     apt-get update && \
-    apt-get install -y --no-install-recommends dotnet-sdk-$DOTNET_VERSION
-
-RUN dotnet --version
+    apt-get install -y --no-install-recommends dotnet-sdk-$DOTNET_VERSION && \
+    dotnet --version
 
 # Install NVM and Node.js
 
